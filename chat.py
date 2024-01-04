@@ -60,7 +60,7 @@ def ask():
             print(f"Question to be sent to API: {question_translated}")
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4.0-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": question_translated},
