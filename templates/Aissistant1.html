@@ -300,6 +300,11 @@ button:hover {
   left: -30px;
 }
 
+#statusMessage {
+  position: relative;
+  left: -30px;
+}
+
 #applyFontSize, #increaseFontSize, #decreaseFontSize, #fontSizeInput {
   position: relative;
   left: 200px;
@@ -371,6 +376,8 @@ let selectedText = '';
 
   async function handleTranslation(language) {
   // Call the translation API
+  updateStatusMessage("Translating...");
+
   try {
     const response = await fetch('http://ec2-13-209-43-188.ap-northeast-2.compute.amazonaws.com:8080/ask', {
       method: 'POST',
@@ -410,9 +417,14 @@ let selectedText = '';
         console.error("An error occurred:", error);
     }
     clearSelectionAndClosePopups();
+
+    updateStatusMessage("");
   }
 
   async function handleSummary() {
+
+      updateStatusMessage("Summarizing...");
+
       // Call the summarization API
       const response = await fetch('http://ec2-13-209-43-188.ap-northeast-2.compute.amazonaws.com:8080/ask', {
         method: 'POST',
@@ -444,9 +456,15 @@ let selectedText = '';
 
       storeProcessedText(summarizedText);
       clearSelectionAndClosePopups();
+
+      updateStatusMessage("");
+
     }
 
     async function handleExplanation() {
+
+      updateStatusMessage("Explaining...");
+
       try {
         // Call the OpenAI API here to generate an explanation based on the highlighted text
         const highlightedText = window.getSelection().toString().trim();
@@ -491,6 +509,9 @@ let selectedText = '';
       } catch (error) {
         console.error('Error generating explanations:', error);
       }
+
+      updateStatusMessage("");
+
     }
 
     const popup = document.createElement('div');
@@ -742,6 +763,10 @@ let selectedText = '';
   }
 });
 
+function updateStatusMessage(message) {
+  const statusMessageElement = document.getElementById('statusMessage');
+  statusMessageElement.textContent = message;
+}
 
 </script>
 
@@ -811,6 +836,7 @@ let selectedText = '';
           <img class="item-2023-06-02-212-1-Nnr" src="../static/assets/-DBc.png"/>
           </div>
             <div>
+              <span id="statusMessage"></span>
               <button id="prevPage">Previous Page</button>
               <span id="pageInfo"></span>
               <button id="nextPage">Next Page</button>
