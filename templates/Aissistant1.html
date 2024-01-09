@@ -240,6 +240,10 @@ button:hover {
                       height: 680px;
                       overflow-y: scroll;
                       }
+                      
+.pdf-page {
+    position: relative;
+}
 
 .textLayer {
     position: absolute;
@@ -249,7 +253,12 @@ button:hover {
     width: 100%;
     height: 100%;
     z-index: 1;
+    cursor: default;
 }
+
+
+
+
 
 
 /* 
@@ -407,11 +416,6 @@ let selectedText = '';
 
     dropdownMenu.style.display = 'none';
 
-    document.addEventListener('click', function() {
-      popup.style.display = 'none';
-      popup_dropdown.style.display = 'none';
-    });
-
     storeProcessedText(translatedText);
   } catch (error) {
         console.error("An error occurred:", error);
@@ -542,13 +546,15 @@ let selectedText = '';
       closeButton.textContent = 'X';
       closeButton.className = 'close-button';
       titleContainer.appendChild(closeButton);
+      popup.appendChild(closeButton); // 'popup' div에 'X' 버튼 추가
 
-      closeButton.addEventListener('click', function() {
-        dropdownMenu.style.display = 'none';
-        subDropdownMenu.style.display = 'none';
-        popup_dropdown.style.display = 'none';
-        clearSelectionAndClosePopups();
-      });
+
+    closeButton.addEventListener('click', function() {
+      dropdownMenu.style.display = 'none';
+      subDropdownMenu.style.display = 'none';
+      popup_dropdown.style.display = 'none';
+      popup.style.display = 'none';
+    });
 
     const popup_dropdown = document.createElement('div');
     popup_dropdown.className = 'popup_dropdown dropdown-menu';
@@ -581,7 +587,7 @@ let selectedText = '';
             console.log(writingArea);
 
             if (writingArea && lastProcessedText) {
-              writingArea.innerText += lastProcessedText + "\n";
+              writingArea.innerText += lastProcessedText + "\n\n";
             }
             clearSelectionAndClosePopups();
           }
@@ -656,14 +662,14 @@ let selectedText = '';
 
     // Shift 키가 눌렸는지 확인하는 이벤트 리스너
     document.addEventListener('keydown', function(event) {
-      if (event.key === 'Control') {
+      if (event.key === 'Shift') {
         isShiftKeyPressed = true;
       }
     });
 
     // Shift 키가 떼어졌는지 확인하는 이벤트 리스너
     document.addEventListener('keyup', function(event) {
-      if (event.key === 'Control') {
+      if (event.key === 'Shift') {
         isShiftKeyPressed = false;
       }
     });
@@ -701,34 +707,20 @@ let selectedText = '';
   ////////////////////////////////
 
   document.addEventListener('DOMContentLoaded', function() {
-  const fontSizeInput = document.getElementById('fontSizeInput');
-  fontSizeInput.value = '10'; // 초기 글씨 크기 설정
+
 
   // 스타일 토글 및 글씨 크기 조절 이벤트 위임
   document.querySelector('.toolbar').addEventListener('click', function(event) {
     if (event.target.id === 'boldButton') toggleStyle('bold');
     else if (event.target.id === 'italicButton') toggleStyle('italic');
     else if (event.target.id === 'underlineButton') toggleStyle('underline');
-    else if (event.target.id === 'increaseFontSize') adjustFontSize(1);
-    else if (event.target.id === 'decreaseFontSize') adjustFontSize(-1);
-    else if (event.target.id === 'applyFontSize') applyFontSize();
+
   });
 
   function toggleStyle(style) {
     document.execCommand(style);
   }
 
-
-  function adjustFontSize(adjustment) {
-    const currentSize = parseInt(fontSizeInput.value) + adjustment;
-    fontSizeInput.value = currentSize;
-    applyStyle(`<span style="font-size: ${currentSize}px;">`, '</span>');
-  }
-
-  function applyFontSize() {
-    const size = fontSizeInput.value;
-    writingArea.style.fontSize = size + 'px'; // writing-area의 글씨 크기를 업데이트
-  }
 
   // 중복된 함수 통합
   function updateFontSizeInfo() {
@@ -837,9 +829,7 @@ function updateStatusMessage(message) {
           </div>
             <div>
               <span id="statusMessage"></span>
-              <button id="prevPage">Previous Page</button>
               <span id="pageInfo"></span>
-              <button id="nextPage">Next Page</button>
               <span id="timer">00:00:00</span>
               <button id="startTimer">Start</button>
               <button id="stopTimer">Stop</button>
@@ -886,21 +876,21 @@ function updateStatusMessage(message) {
           <div class="auto-group-95mq-din">
             <div id="pdfViewerContainer"></div>
             <script>
-              let currentPage = 1; // 현재 페이지 번호
-              let pdfDoc = null; // PDF 문서 객체
+              // let currentPage = 1; // 현재 페이지 번호
+              // let pdfDoc = null; // PDF 문서 객체
           
-              document.getElementById('prevPage').addEventListener('click', () => {
-                  if (currentPage > 1) {
-                      renderPage(--currentPage);
-                  }
-              });
+              // document.getElementById('prevPage').addEventListener('click', () => {
+              //     if (currentPage > 1) {
+              //         renderPage(--currentPage);
+              //     }
+              // });
           
-              document.getElementById('nextPage').addEventListener('click', () => {
-                  if (currentPage < pdfDoc.numPages) {
-                      renderPage(++currentPage);
-                  }
-              });
-          
+              // document.getElementById('nextPage').addEventListener('click', () => {
+              //     if (currentPage < pdfDoc.numPages) {
+              //         renderPage(++currentPage);
+              //     }
+              // });
+
               window.onload = function() {
                   // LocalStorage에서 Base64 인코딩된 PDF 데이터를 가져옵니다.
                   const base64String = localStorage.getItem('uploadedPDF');
@@ -916,98 +906,56 @@ function updateStatusMessage(message) {
                       pdfDataArray[i] = pdfData.charCodeAt(i);
                   }
           
-                  // PDF 문서를 로드합니다.
+                  /// PDF 문서 로드 후 모든 페이지 렌더링
                   pdfjsLib.getDocument({ data: pdfDataArray }).promise.then(doc => {
                       pdfDoc = doc;
-                      renderPage(currentPage);
-                      updatePageInfo();
+                      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                          renderPage(pageNum);
+                      }
                   });
-              };
-          
-              function updatePageInfo() {
-                const pageInfo = document.getElementById('pageInfo');
-                if (pdfDoc) {
-                  pageInfo.textContent = `${currentPage} / ${pdfDoc.numPages}`;
-                } else {
-                  pageInfo.textContent = '';
-                }
-              }
 
-              function renderPage(num) {
-                  if (num < 1 || num > pdfDoc.numPages) {
-                      return; // Prevent rendering non-existing pages
-                  }
-                  currentPage = num;
-          
-                  // Clear existing content in pdfViewerContainer
-                  const pdfViewerContainer = document.getElementById('pdfViewerContainer');
-                  pdfViewerContainer.innerHTML = ''; 
-          
-                  pdfDoc.getPage(num).then(page => {
-                      const viewport = page.getViewport({ scale: 1.5 });
-                      const canvas = document.createElement("canvas");
-                      canvas.height = viewport.height;
-                      canvas.width = viewport.width;
-                      const context = canvas.getContext('2d');
-                      pdfViewerContainer.appendChild(canvas);
-          
-                      const renderContext = {
-                          canvasContext: context,
-                          viewport: viewport
-                      };
-                      page.render(renderContext).promise.then(() => {
-                          return page.getTextContent();
-                      }).then(textContent => {
+                  // 각 페이지를 렌더링하는 함수
+                  function renderPage(num) {
+                      pdfDoc.getPage(num).then(page => {
+                          const viewport = page.getViewport({ scale: 1.5 });
+                          const pageDiv = document.createElement("div");
+                          pageDiv.className = "pdf-page";
+
+                          const canvas = document.createElement("canvas");
+                          canvas.height = viewport.height;
+                          canvas.width = viewport.width;
+                          pageDiv.appendChild(canvas);
+
+                          const context = canvas.getContext('2d');
+                          const renderContext = {
+                              canvasContext: context,
+                              viewport: viewport
+                          };
+                          page.render(renderContext);
+
                           const textLayerDiv = document.createElement("div");
                           textLayerDiv.className = "textLayer";
                           textLayerDiv.style.height = `${viewport.height}px`;
                           textLayerDiv.style.width = `${viewport.width}px`;
-                          pdfViewerContainer.appendChild(textLayerDiv);
-          
-                          pdfjsLib.renderTextLayer({
-                              textContentSource: textContent,
-                              container: textLayerDiv,
-                              viewport: viewport,
-                              textDivs: []
+                          textLayerDiv.style.position = "absolute";
+                          textLayerDiv.style.top = "0";
+                          textLayerDiv.style.left = "0";
+                          pageDiv.appendChild(textLayerDiv);
+
+                          page.getTextContent().then(textContent => {
+                              pdfjsLib.renderTextLayer({
+                                  textContent: textContent,
+                                  container: textLayerDiv,
+                                  viewport: viewport,
+                                  textDivs: []
+                              });
                           });
+
+                          document.getElementById('pdfViewerContainer').appendChild(pageDiv);
                       });
-                  });
-                  updatePageInfo();
-              }
+                  }
+                }
               
-              // const observer = new MutationObserver(mutations => {
-              //   mutations.forEach(mutation => {
-              //     mutation.addedNodes.forEach(node => {
-              //       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN') {
-              //         node.draggable = true;
-              //         node.classList.add('draggable');
-              //       }
-              //     });
-              //   });
-              // });
-
-              // const config = { childList: true, subtree: true };
-              // const targetNode = document.querySelector('.textLayer');
-              // observer.observe(targetNode, config);
-              
-              // let draggedElement = null; // 드래그 중인 요소를 저장할 변수
-
-              // document.addEventListener('dragstart', event => {
-              //   if (event.target.classList.contains('draggable')) {
-              //     draggedElement = event.target; // 드래그 중인 요소를 저장
-              //     event.dataTransfer.setData('text/plain', event.target.id); // 드래그 데이터 설정
-              //   }
-              // });
-
-
-              // document.addEventListener('dragend', event => {
-              //   if (event.target.classList.contains('draggable')) {
-              //     draggedElement = null; // 드래그 중인 요소 참조 해제
-              //   }
-              // });
-
-
-
             </script>
           </div>
           
@@ -1026,17 +974,13 @@ function updateStatusMessage(message) {
             <button id="boldButton">Bold</button>
             <button id="italicButton">Italic</button>
             <button id="underlineButton">Underline</button>
-            <input type="number" id="fontSizeInput" placeholder="글씨 크기">
-            <button id="increaseFontSize">+</button>
-            <button id="decreaseFontSize">-</button>
-            <button id="applyFontSize">Apply Font Size</button>
           </div>
         </div>
         <p class="add-Sii">Add </p>
         <img class="filedockduotone-kUW" src="../static/assets/filedockduotone-8ge.png"/>
         <div class="rectangle-4126-5mg">
           <div class="writing-container">
-            <div class="writing-area" contenteditable="true" style="border: 1px solid black; min-height: 100px;" placeholder="Write your notes..."></div>
+            <div class="writing-area" contenteditable="true" style="font-size: 16px; border: 1px solid black; min-height: 100px;" placeholder="Write your notes..."></div>
             <div id="chat-container">
               <div id="chat-output"></div>
               <input type="text" id="chat-input" placeholder="Ask any questions...">
