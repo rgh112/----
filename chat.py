@@ -54,15 +54,20 @@ def ask():
         print(f"Received question: {question}")
 
         question_translated = question  # Initialize to handle cases that are not translation
-        
+        model_to_use = "gpt-4"  # Default model
+
         if question.startswith('translate to '):
             prefix, text_to_translate = question.split(": ", 1)
             language = prefix.split(" ")[2]
             question_translated = f"Translate the following text to {language}: {text_to_translate}"
             print(f"Question to be sent to API: {question_translated}")
+            model_to_use = "gpt-3.5-turbo"  # Use GPT-3.5-turbo for translation
+
+        # Log which model is being used
+        print(f"Using model: {model_to_use}")
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model=model_to_use,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": question_translated},
@@ -75,6 +80,8 @@ def ask():
     except Exception as e:
         print(f"An exception occurred: {e}")
         return jsonify({"error": str(e)})
+
+
 
 # Run the Flask app
 if __name__ == "__main__":
